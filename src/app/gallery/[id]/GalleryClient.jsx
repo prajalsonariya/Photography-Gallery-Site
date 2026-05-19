@@ -150,7 +150,7 @@ export default function GalleryClient({ initialImages, initialSubfolders = [] })
         {sortedSubfolders.length > 0 && (
         <div className="mb-4">
           <h2 className="text-[10px] sm:text-xs text-neutral-500 uppercase tracking-[0.3em] mb-4">Folders</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {sortedSubfolders.map((folder, index) => (
               <div 
                 key={folder.id}
