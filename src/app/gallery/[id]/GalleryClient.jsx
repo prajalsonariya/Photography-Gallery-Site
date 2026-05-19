@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import MasonryGallery from '@/components/MasonryGallery';
 import SortBar from '@/components/SortBar';
@@ -12,6 +13,7 @@ const SelectionBar = dynamic(() => import('@/components/SelectionBar'), { ssr: f
 
 export default function GalleryClient({ initialImages, initialSubfolders = [] }) {
   const [images] = useState(initialImages);
+  const [hoveredFolder, setHoveredFolder] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [sortOrder, setSortOrder] = useState('asc');
   
@@ -125,13 +127,38 @@ export default function GalleryClient({ initialImages, initialSubfolders = [] })
   }, [selectionMode, handleClearSelection]);
 
   return (
-    <div className="flex flex-col gap-8">
-      {sortedSubfolders.length > 0 && (
+    <>
+      <AnimatePresence>
+        {hoveredFolder && hoveredFolder.thumbnailUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.15 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="fixed inset-0 z-0 pointer-events-none"
+          >
+            <img
+              src={hoveredFolder.thumbnailUrl}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover blur-md scale-110"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex flex-col gap-8 relative z-10">
+        {sortedSubfolders.length > 0 && (
         <div className="mb-4">
           <h2 className="text-[10px] sm:text-xs text-neutral-500 uppercase tracking-[0.3em] mb-4">Folders</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {sortedSubfolders.map((folder, index) => (
-              <FolderCard key={folder.id} folder={folder} index={index} />
+              <div 
+                key={folder.id}
+                onMouseEnter={() => setHoveredFolder(folder)}
+                onMouseLeave={() => setHoveredFolder(null)}
+              >
+                <FolderCard folder={folder} index={index} />
+              </div>
             ))}
           </div>
         </div>
@@ -185,5 +212,6 @@ export default function GalleryClient({ initialImages, initialSubfolders = [] })
         onSelectAll={handleSelectAll}
       />
     </div>
+    </>
   );
 }
