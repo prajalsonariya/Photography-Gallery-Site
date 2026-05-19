@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { cache } from 'react';
 
 function getMockFolders() {
   return [
@@ -64,7 +65,7 @@ function cdnProxy(baseCdnUrl, size) {
   return `/api/thumbnail?url=${encodeURIComponent(cdnUrl)}`;
 }
 
-export async function getFolders() {
+export const getFolders = cache(async () => {
   if (!hasValidCredentials()) {
     return getMockFolders();
   }
@@ -179,9 +180,9 @@ export async function getFolders() {
   }
 
   return folders;
-}
+});
 
-export async function getFolderImages(folderId) {
+export const getFolderImages = cache(async (folderId) => {
   if (!hasValidCredentials()) {
     const images = getMockImages(folderId);
     return { images, subfolders: [] };
@@ -284,10 +285,13 @@ export async function getFolderImages(folderId) {
     });
   }
 
-  return { images, subfolders: processedSubfolders };
-}
+  return {
+    images,
+    subfolders: processedSubfolders
+  };
+});
 
-export async function getImageStream(fileId) {
+export const getImageStream = cache(async (fileId) => {
   if (!hasValidCredentials()) {
     throw new Error('No credentials found for Google Drive API');
   }
@@ -298,7 +302,7 @@ export async function getImageStream(fileId) {
     { responseType: 'stream' }
   );
   return response.data;
-}
+});
 
 export async function getFolderDetails(folderId) {
   if (!hasValidCredentials()) {

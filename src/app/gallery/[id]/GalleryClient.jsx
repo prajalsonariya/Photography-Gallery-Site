@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import MasonryGallery from '@/components/MasonryGallery';
-import Lightbox from '@/components/Lightbox';
 import SortBar from '@/components/SortBar';
 import FolderCard from '@/components/FolderCard';
-import SelectionBar from '@/components/SelectionBar';
 import { MousePointerClick } from 'lucide-react';
+
+const Lightbox = dynamic(() => import('@/components/Lightbox'), { ssr: false });
+const SelectionBar = dynamic(() => import('@/components/SelectionBar'), { ssr: false });
 
 export default function GalleryClient({ initialImages, initialSubfolders = [] }) {
   const [images] = useState(initialImages);
