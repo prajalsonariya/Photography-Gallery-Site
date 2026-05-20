@@ -1,50 +1,6 @@
 import { google } from 'googleapis';
 import { cache } from 'react';
 
-function getMockFolders() {
-  return [
-    {
-      id: 'mock-folder-1',
-      name: 'May 10 Beach',
-      thumbnailUrl: 'https://picsum.photos/seed/beach/1000/1000'
-    },
-    {
-      id: 'mock-folder-2',
-      name: 'Film BTS',
-      thumbnailUrl: 'https://picsum.photos/seed/film/1000/1000'
-    },
-    {
-      id: 'mock-folder-3',
-      name: 'Urban Exploration',
-      thumbnailUrl: 'https://picsum.photos/seed/urban/1000/1000'
-    }
-  ];
-}
-
-function getMockImages(folderId) {
-  const seed = folderId === 'mock-folder-1' ? 'beach' : (folderId === 'mock-folder-2' ? 'film' : 'urban');
-  return Array.from({ length: 15 }).map((_, i) => ({
-    id: `mock-img-${folderId}-${i}`,
-    name: `${seed} ${i + 1}`,
-    mimeType: 'image/jpeg',
-    description: `A stunning shot from the ${seed} collection.`,
-    imageMediaMetadata: {
-      time: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-      cameraMake: 'Sony',
-      cameraModel: 'A7R IV',
-      focalLength: 35 + (i * 5),
-      aperture: 1.4 + (i % 3),
-      isoSpeed: 100 * (i % 4 + 1),
-      exposureTime: 0.005 + (i * 0.001),
-      width: 1200 + (i % 2) * 400,
-      height: 800 + (i % 3) * 200,
-    },
-    url: `https://picsum.photos/seed/${seed}${i}/1200/800`,
-    cdnUrl: `https://picsum.photos/seed/${seed}${i}/800/600`,
-    rawFileId: i % 3 === 0 ? `mock-raw-${folderId}-${i}` : null,
-  }));
-}
-
 function getAuth() {
   return new google.auth.GoogleAuth({
     credentials: {
@@ -53,11 +9,6 @@ function getAuth() {
     },
     scopes: ['https://www.googleapis.com/auth/drive.readonly'],
   });
-}
-
-function hasValidCredentials() {
-  const pk = process.env.GOOGLE_PRIVATE_KEY;
-  return process.env.GOOGLE_CLIENT_EMAIL && pk && pk.includes('-----BEGIN PRIVATE KEY-----') && !pk.includes('YOUR_PRIVATE_KEY_HERE');
 }
 
 function cdnProxy(baseCdnUrl, size) {
@@ -155,10 +106,6 @@ async function fetchFoldersWithThumbnails(drive, rootFolderId) {
 }
 
 export const getFolders = cache(async () => {
-  if (!hasValidCredentials()) {
-    return getMockFolders();
-  }
-
   const drive = google.drive({ version: 'v3', auth: getAuth() });
   const rootFolderId = process.env.GOOGLE_DRIVE_PUBLIC_ROOT_ID;
 
@@ -191,10 +138,6 @@ export const getFolders = cache(async () => {
 });
 
 export const getPrivateFolders = cache(async () => {
-  if (!hasValidCredentials()) {
-    return [];
-  }
-
   const drive = google.drive({ version: 'v3', auth: getAuth() });
   const rootFolderId = process.env.GOOGLE_DRIVE_PRIVATE_ROOT_ID;
 
@@ -211,11 +154,6 @@ export const getPrivateFolders = cache(async () => {
 });
 
 export const getFolderImages = cache(async (folderId) => {
-  if (!hasValidCredentials()) {
-    const images = getMockImages(folderId);
-    return { images, subfolders: [] };
-  }
-
   const drive = google.drive({ version: 'v3', auth: getAuth() });
   
   const filesRes = await drive.files.list({
@@ -320,9 +258,6 @@ export const getFolderImages = cache(async (folderId) => {
 });
 
 export const getImageStream = cache(async (fileId) => {
-  if (!hasValidCredentials()) {
-    throw new Error('No credentials found for Google Drive API');
-  }
   const drive = google.drive({ version: 'v3', auth: getAuth() });
   
   const response = await drive.files.get(
