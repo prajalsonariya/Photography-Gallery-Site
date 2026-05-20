@@ -40,8 +40,8 @@ export default function GalleryClient({ initialImages, initialSubfolders = [], b
   useEffect(() => {
     const photoId = new URLSearchParams(window.location.search).get('photo');
     if (!photoId) return;
-    // Wait for sortedImages to be available via a small defer
-    const idx = initialImages.findIndex(img => img.id === photoId);
+    // Must search sortedImages (what Lightbox uses), NOT initialImages (different order)
+    const idx = sortedImages.findIndex(img => img.id === photoId);
     if (idx !== -1) setSelectedIndex(idx);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
