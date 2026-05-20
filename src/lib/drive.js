@@ -273,7 +273,7 @@ export async function getFolderDetails(folderId) {
   try {
     const res = await drive.files.get({
       fileId: folderId,
-      fields: 'id, name'
+      fields: 'id, name, parents'
     });
     return res.data;
   } catch (err) {
@@ -281,3 +281,30 @@ export async function getFolderDetails(folderId) {
     return { id: folderId, name: 'Gallery' };
   }
 }
+
+export const verifyFolderRoot = cache(async (folderId, expectedRootId) => {
+  if (folderId === expectedRootId) return true;
+  
+  const drive = google.drive({ version: 'v3', auth: getAuth() });
+  let currentId = folderId;
+  
+  try {
+    // Traverse up the tree (limit to 10 levels to prevent infinite loops)
+    for (let i = 0; i < 10; i++) {
+      const res = await drive.files.get({
+        fileId: currentId,
+        fields: 'parents'
+      });
+      
+      const parents = res.data.parents;
+      if (!parents || parents.length === 0) return false;
+      
+      if (parents.includes(expectedRootId)) return true;
+      currentId = parents[0];
+    }
+  } catch (err) {
+    console.error('Error verifying folder root:', err);
+  }
+  
+  return false;
+});

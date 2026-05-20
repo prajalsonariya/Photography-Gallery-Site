@@ -1,5 +1,5 @@
 import Header from '@/components/Header';
-import { getFolderImages, getFolderDetails, getFolders } from '@/lib/drive';
+import { getFolderImages, getFolderDetails, verifyFolderRoot } from '@/lib/drive';
 import GalleryClient from './GalleryClient';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -18,9 +18,8 @@ export async function generateMetadata({ params }) {
 export default async function GalleryPage({ params }) {
   const { id } = await params;
   
-  // Verify this folder is part of the public root
-  const publicFolders = await getFolders();
-  const isPublic = publicFolders.some(f => f.id === id);
+  // Verify this folder is part of the public root (including nested subfolders)
+  const isPublic = await verifyFolderRoot(id, process.env.GOOGLE_DRIVE_PUBLIC_ROOT_ID);
   if (!isPublic) {
     notFound();
   }

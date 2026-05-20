@@ -1,5 +1,5 @@
 import Header from '@/components/Header';
-import { getFolderImages, getPrivateFolders } from '@/lib/drive';
+import { getFolderImages, getFolderDetails, verifyFolderRoot } from '@/lib/drive';
 import GalleryClient from '@/app/gallery/[id]/GalleryClient';
 import { notFound } from 'next/navigation';
 
@@ -7,8 +7,7 @@ export const revalidate = 0; // Dynamic route
 
 export async function generateMetadata({ params }) {
   const { clientTag } = await params;
-  const privateFolders = await getPrivateFolders();
-  const folder = privateFolders.find(f => f.id === clientTag);
+  const folder = await getFolderDetails(clientTag);
   
   return {
     title: folder ? `${folder.name} | Client Gallery` : 'Client Gallery | Prajal Sonariya',
@@ -23,15 +22,16 @@ export default async function SharePage({ params }) {
   const { clientTag } = await params;
   
   // Verify this folder is part of the private root to prevent ID traversal
-  const privateFolders = await getPrivateFolders();
-  const folder = privateFolders.find(f => f.id === clientTag);
-  
-  if (!folder) {
+  const isPrivate = await verifyFolderRoot(clientTag, process.env.GOOGLE_DRIVE_PRIVATE_ROOT_ID);
+  if (!isPrivate) {
     notFound();
   }
 
-  // Fetch images and subfolders securely
-  const { images, subfolders } = await getFolderImages(clientTag);
+  // Fetch images, subfolders, and basic folder info securely
+  const [{ images, subfolders }, folder] = await Promise.all([
+    getFolderImages(clientTag),
+    getFolderDetails(clientTag)
+  ]);
 
   return (
     <main className="min-h-screen bg-[#1e1e1e] text-neutral-200 font-sans selection:bg-white/20 selection:text-white">
@@ -42,7 +42,7 @@ export default async function SharePage({ params }) {
             Private Client Gallery
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-[0.2em] uppercase">
-            {folder.name}
+            {folder?.name || 'Client Gallery'}
           </h1>
         </div>
         <GalleryClient initialImages={images} initialSubfolders={subfolders} basePath="/share" />
