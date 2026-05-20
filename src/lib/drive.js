@@ -268,10 +268,6 @@ export const getImageStream = cache(async (fileId) => {
 });
 
 export async function getFolderDetails(folderId) {
-  if (!hasValidCredentials()) {
-    const mockFolders = getMockFolders();
-    return mockFolders.find(f => f.id === folderId) || { id: folderId, name: 'Gallery' };
-  }
 
   const drive = google.drive({ version: 'v3', auth: getAuth() });
   try {
