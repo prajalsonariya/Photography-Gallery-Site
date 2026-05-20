@@ -72,12 +72,6 @@ export default function Lightbox({ images, currentIndex, onClose, onNext, onPrev
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 text-white/50 hover:text-white transition-all duration-150 bg-white/5 hover:bg-white/10 rounded-full p-3 backdrop-blur-md"
-        >
-          <X className="w-5 h-5" />
-        </button>
 
         <button 
           onClick={() => { setShowOriginal(false); onPrev(); }}
@@ -99,13 +93,13 @@ export default function Lightbox({ images, currentIndex, onClose, onNext, onPrev
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full flex-1 flex items-center justify-center min-h-0 mb-6 group"
+            className="relative w-full flex-1 flex items-center justify-center min-h-0 mb-6 mt-12 sm:mt-0 group"
           >
             <button 
               onClick={onClose}
-              className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[60] bg-black/50 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 sm:opacity-100"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 z-[60] bg-black/60 hover:bg-black/90 text-white p-2 sm:p-3 rounded-full backdrop-blur-md transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 shadow-xl"
             >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
             {image.type === 'video' ? (
               <video 
