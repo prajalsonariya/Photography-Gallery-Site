@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import MasonryGallery from '@/components/MasonryGallery';
@@ -16,10 +16,35 @@ export default function GalleryClient({ initialImages, initialSubfolders = [], b
   const [hoveredFolder, setHoveredFolder] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [sortOrder, setSortOrder] = useState('asc');
-  
+
   // Selection state
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+
+  // Sync ?photo=imageId to URL when Lightbox opens/closes
+  // Uses history.replaceState — no navigation, no re-render, zero cost
+  const openImage = useCallback((idx, imageList) => {
+    setSelectedIndex(idx);
+    if (idx !== null && imageList[idx]) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('photo', imageList[idx].id);
+      history.replaceState(null, '', url.toString());
+    } else {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('photo');
+      history.replaceState(null, '', url.toString());
+    }
+  }, []);
+
+  // On mount, check if ?photo= param is present and open that image
+  useEffect(() => {
+    const photoId = new URLSearchParams(window.location.search).get('photo');
+    if (!photoId) return;
+    // Wait for sortedImages to be available via a small defer
+    const idx = initialImages.findIndex(img => img.id === photoId);
+    if (idx !== -1) setSelectedIndex(idx);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sortedSubfolders = useMemo(() => {
     return [...initialSubfolders].sort((a, b) => {
@@ -186,7 +211,7 @@ export default function GalleryClient({ initialImages, initialSubfolders = [], b
 
           <MasonryGallery 
             images={sortedImages} 
-            onImageClick={(idx) => setSelectedIndex(idx)}
+            onImageClick={(idx) => openImage(idx, sortedImages)}
             selectionMode={selectionMode}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
@@ -198,9 +223,15 @@ export default function GalleryClient({ initialImages, initialSubfolders = [], b
         <Lightbox 
           images={sortedImages}
           currentIndex={selectedIndex}
-          onClose={() => setSelectedIndex(null)} 
-          onNext={() => setSelectedIndex((prev) => (prev + 1) % sortedImages.length)}
-          onPrev={() => setSelectedIndex((prev) => (prev - 1 + sortedImages.length) % sortedImages.length)}
+          onClose={() => openImage(null, sortedImages)} 
+          onNext={() => {
+            const next = (selectedIndex + 1) % sortedImages.length;
+            openImage(next, sortedImages);
+          }}
+          onPrev={() => {
+            const prev = (selectedIndex - 1 + sortedImages.length) % sortedImages.length;
+            openImage(prev, sortedImages);
+          }}
         />
       )}
 
