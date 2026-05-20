@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 
-export default function FolderCard({ folder }) {
+export default function FolderCard({ folder, basePath = '/gallery' }) {
   return (
-    <Link href={`/gallery/${folder.id}`} className="group relative block overflow-hidden rounded-sm bg-[#1e1e1e] aspect-square sm:aspect-[4/3]">
+    <Link href={`${basePath}/${folder.id}`} className="group relative block overflow-hidden rounded-sm bg-[#1e1e1e] aspect-square sm:aspect-[4/3]">
       {folder.thumbnailUrl && (
         <img 
           src={folder.thumbnailUrl}

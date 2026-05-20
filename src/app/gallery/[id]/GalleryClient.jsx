@@ -11,7 +11,7 @@ import { MousePointerClick } from 'lucide-react';
 const Lightbox = dynamic(() => import('@/components/Lightbox'), { ssr: false });
 const SelectionBar = dynamic(() => import('@/components/SelectionBar'), { ssr: false });
 
-export default function GalleryClient({ initialImages, initialSubfolders = [] }) {
+export default function GalleryClient({ initialImages, initialSubfolders = [], basePath = '/gallery' }) {
   const [images] = useState(initialImages);
   const [hoveredFolder, setHoveredFolder] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -157,7 +157,7 @@ export default function GalleryClient({ initialImages, initialSubfolders = [] })
                 onMouseEnter={() => setHoveredFolder(folder)}
                 onMouseLeave={() => setHoveredFolder(null)}
               >
-                <FolderCard folder={folder} index={index} />
+                <FolderCard folder={folder} index={index} basePath={basePath} />
               </div>
             ))}
           </div>

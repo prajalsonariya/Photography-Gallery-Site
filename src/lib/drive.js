@@ -65,43 +65,14 @@ function cdnProxy(baseCdnUrl, size) {
   return `/api/thumbnail?url=${encodeURIComponent(cdnUrl)}`;
 }
 
-export const getFolders = cache(async () => {
-  if (!hasValidCredentials()) {
-    return getMockFolders();
-  }
-
-  const drive = google.drive({ version: 'v3', auth: getAuth() });
-  const rootFolderId = process.env.GOOGLE_DRIVE_PUBLIC_ROOT_ID;
-
-  // Check if root folder has direct images
-  const rootImagesRes = await drive.files.list({
-    q: `'${rootFolderId}' in parents and mimeType contains 'image/' and trashed = false`,
-    fields: 'files(id, name, thumbnailLink)',
+async function fetchFoldersWithThumbnails(drive, rootFolderId) {
+  const foldersRes = await drive.files.list({
+    q: `'${rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    fields: 'files(id, name, createdTime)',
     orderBy: 'createdTime desc',
-    pageSize: 20, // get a few to check for 'cover'
   });
 
   const folders = [];
-
-  if (rootImagesRes.data.files && rootImagesRes.data.files.length > 0) {
-    const coverImage = rootImagesRes.data.files.find(f => f.name.toLowerCase().includes('cover')) || rootImagesRes.data.files[0];
-    let fallbackUrl = `/api/image/${coverImage.id}`;
-    let baseCdnUrl = coverImage.thumbnailLink ? coverImage.thumbnailLink.replace(/=[^=]*$/, '') : null;
-    
-    folders.push({
-      id: rootFolderId,
-      name: 'Main Collection',
-      thumbnailUrl: baseCdnUrl ? cdnProxy(baseCdnUrl, 's200-rw') : fallbackUrl,
-      baseCdnUrl,
-      fallbackUrl
-    });
-  }
-
-  const foldersRes = await drive.files.list({
-    q: `'${rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-    fields: 'files(id, name)',
-    orderBy: 'name',
-  });
 
   for (const folder of (foldersRes.data.files || [])) {
     let targetImage = null;
@@ -173,6 +144,7 @@ export const getFolders = cache(async () => {
     folders.push({
       id: folder.id,
       name: folder.name,
+      createdTime: folder.createdTime,
       thumbnailUrl,
       baseCdnUrl,
       fallbackUrl
@@ -180,6 +152,42 @@ export const getFolders = cache(async () => {
   }
 
   return folders;
+}
+
+export const getFolders = cache(async () => {
+  if (!hasValidCredentials()) {
+    return getMockFolders();
+  }
+
+  const drive = google.drive({ version: 'v3', auth: getAuth() });
+  const rootFolderId = process.env.GOOGLE_DRIVE_PUBLIC_ROOT_ID;
+
+  // Check if root folder has direct images
+  const rootImagesRes = await drive.files.list({
+    q: `'${rootFolderId}' in parents and mimeType contains 'image/' and trashed = false`,
+    fields: 'files(id, name, thumbnailLink)',
+    orderBy: 'createdTime desc',
+    pageSize: 20, // get a few to check for 'cover'
+  });
+
+  const folders = [];
+
+  if (rootImagesRes.data.files && rootImagesRes.data.files.length > 0) {
+    const coverImage = rootImagesRes.data.files.find(f => f.name.toLowerCase().includes('cover')) || rootImagesRes.data.files[0];
+    let fallbackUrl = `/api/image/${coverImage.id}`;
+    let baseCdnUrl = coverImage.thumbnailLink ? coverImage.thumbnailLink.replace(/=[^=]*$/, '') : null;
+    
+    folders.push({
+      id: rootFolderId,
+      name: 'Main Collection',
+      thumbnailUrl: baseCdnUrl ? cdnProxy(baseCdnUrl, 's200-rw') : fallbackUrl,
+      baseCdnUrl,
+      fallbackUrl
+    });
+  }
+
+  const subfolders = await fetchFoldersWithThumbnails(drive, rootFolderId);
+  return [...folders, ...subfolders].sort((a, b) => a.name.localeCompare(b.name));
 });
 
 export const getPrivateFolders = cache(async () => {
@@ -195,13 +203,7 @@ export const getPrivateFolders = cache(async () => {
   }
 
   try {
-    const foldersRes = await drive.files.list({
-      q: `'${rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-      fields: 'files(id, name, createdTime)',
-      orderBy: 'createdTime desc',
-    });
-
-    return foldersRes.data.files || [];
+    return await fetchFoldersWithThumbnails(drive, rootFolderId);
   } catch (err) {
     console.error('Error fetching private folders:', err);
     return [];

@@ -99,8 +99,14 @@ export default function Lightbox({ images, currentIndex, onClose, onNext, onPrev
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full flex-1 flex items-center justify-center min-h-0 mb-6"
+            className="relative w-full flex-1 flex items-center justify-center min-h-0 mb-6 group"
           >
+            <button 
+              onClick={onClose}
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[60] bg-black/50 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 sm:opacity-100"
+            >
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
             {image.type === 'video' ? (
               <video 
                 src={image.url} 

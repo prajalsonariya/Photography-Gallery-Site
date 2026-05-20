@@ -45,7 +45,7 @@ export default async function SharePage({ params }) {
             {folder.name}
           </h1>
         </div>
-        <GalleryClient initialImages={images} initialSubfolders={subfolders} />
+        <GalleryClient initialImages={images} initialSubfolders={subfolders} basePath="/share" />
       </div>
     </main>
   );
