@@ -1,5 +1,5 @@
 import Header from '@/components/Header';
-import { getFolderImages, getFolderDetails, isFolderInPrivateRoot } from '@/lib/drive';
+import { getFolderImages, getFolderDetails } from '@/lib/drive';
 import GalleryClient from '@/app/gallery/[id]/GalleryClient';
 import { notFound } from 'next/navigation';
 
@@ -21,17 +21,15 @@ export async function generateMetadata({ params }) {
 export default async function SharePage({ params }) {
   const { clientTag } = await params;
   
-  // Verify this folder is part of the private root to prevent ID traversal
-  const isPrivate = await isFolderInPrivateRoot(clientTag);
-  if (!isPrivate) {
-    notFound();
-  }
-
-  // Fetch images, subfolders, and basic folder info securely
+  // Load folder — if the ID doesn't exist in Drive, getFolderDetails returns null → 404
   const [{ images, subfolders }, folder] = await Promise.all([
     getFolderImages(clientTag),
     getFolderDetails(clientTag)
   ]);
+
+  if (!folder) {
+    notFound();
+  }
 
   return (
     <main className="min-h-screen bg-[#1e1e1e] text-neutral-200 font-sans selection:bg-white/20 selection:text-white">
