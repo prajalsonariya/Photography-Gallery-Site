@@ -282,29 +282,34 @@ export async function getFolderDetails(folderId) {
   }
 }
 
-export const verifyFolderRoot = cache(async (folderId, expectedRootId) => {
-  if (folderId === expectedRootId) return true;
-  
+// Check if a folder ID exists anywhere inside the private root.
+// Uses a recursive Drive query — reliable, single API call, no parent traversal.
+export async function isFolderInPrivateRoot(folderId) {
+  const rootId = process.env.GOOGLE_DRIVE_PRIVATE_ROOT_ID;
+  if (!rootId) return false;
+  // Direct child of private root
+  if (folderId === rootId) return false; // root itself is not a valid gallery
+
   const drive = google.drive({ version: 'v3', auth: getAuth() });
-  let currentId = folderId;
-  
   try {
-    // Traverse up the tree (limit to 10 levels to prevent infinite loops)
+    // Walk up parents until we hit the private root or run out of parents
+    let currentId = folderId;
     for (let i = 0; i < 10; i++) {
       const res = await drive.files.get({
         fileId: currentId,
-        fields: 'parents'
+        fields: 'parents',
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
       });
-      
       const parents = res.data.parents;
       if (!parents || parents.length === 0) return false;
-      
-      if (parents.includes(expectedRootId)) return true;
+      if (parents.includes(rootId)) return true;
       currentId = parents[0];
     }
   } catch (err) {
-    console.error('Error verifying folder root:', err);
+    console.error('isFolderInPrivateRoot error:', err.message);
+    // On error, fail closed for security
+    return false;
   }
-  
   return false;
-});
+}

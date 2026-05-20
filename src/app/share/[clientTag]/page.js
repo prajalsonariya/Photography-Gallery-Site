@@ -1,5 +1,5 @@
 import Header from '@/components/Header';
-import { getFolderImages, getFolderDetails, verifyFolderRoot } from '@/lib/drive';
+import { getFolderImages, getFolderDetails, isFolderInPrivateRoot } from '@/lib/drive';
 import GalleryClient from '@/app/gallery/[id]/GalleryClient';
 import { notFound } from 'next/navigation';
 
@@ -22,7 +22,7 @@ export default async function SharePage({ params }) {
   const { clientTag } = await params;
   
   // Verify this folder is part of the private root to prevent ID traversal
-  const isPrivate = await verifyFolderRoot(clientTag, process.env.GOOGLE_DRIVE_PRIVATE_ROOT_ID);
+  const isPrivate = await isFolderInPrivateRoot(clientTag);
   if (!isPrivate) {
     notFound();
   }
