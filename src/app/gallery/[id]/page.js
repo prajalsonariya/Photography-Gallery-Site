@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
-export const revalidate = 3600;
+export const revalidate = 60; // revalidate every minute
 
 export async function generateMetadata({ params }) {
   const { id } = await params;

@@ -2,7 +2,7 @@ import Header from '@/components/Header';
 import HomeClient from './HomeClient';
 import { getFolders } from '@/lib/drive';
 
-export const revalidate = 3600; // revalidate every hour
+export const revalidate = 60; // revalidate every minute
 
 export default async function Home() {
   const folders = await getFolders();
