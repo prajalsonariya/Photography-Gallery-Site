@@ -1,0 +1,24 @@
+import { getPrivateFolders } from '@/lib/drive';
+import AdminClient from './AdminClient';
+import Header from '@/components/Header';
+
+export const revalidate = 0; // Never cache the admin page completely to ensure fresh list
+
+export default async function AdminPage() {
+  const folders = await getPrivateFolders();
+
+  return (
+    <main className="min-h-screen bg-[#1e1e1e] text-neutral-200 font-sans selection:bg-white/20 selection:text-white">
+      <Header />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-32 pb-24">
+        <h1 className="text-3xl font-black text-white mb-8 tracking-tight uppercase">
+          Private Admin Dashboard
+        </h1>
+        <p className="text-neutral-400 mb-8 font-light tracking-wide text-sm">
+          Generate secure shareable links for your clients. These folders are located in your private Drive root and are not publicly listed on the home page.
+        </p>
+        <AdminClient folders={folders} />
+      </div>
+    </main>
+  );
+}

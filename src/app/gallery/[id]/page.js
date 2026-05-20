@@ -1,8 +1,9 @@
 import Header from '@/components/Header';
-import { getFolderImages, getFolderDetails } from '@/lib/drive';
+import { getFolderImages, getFolderDetails, getFolders } from '@/lib/drive';
 import GalleryClient from './GalleryClient';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { notFound } from 'next/navigation';
 
 export const revalidate = 3600;
 
@@ -17,6 +18,13 @@ export async function generateMetadata({ params }) {
 export default async function GalleryPage({ params }) {
   const { id } = await params;
   
+  // Verify this folder is part of the public root
+  const publicFolders = await getFolders();
+  const isPublic = publicFolders.some(f => f.id === id);
+  if (!isPublic) {
+    notFound();
+  }
+
   // Fetch images, subfolders, and basic folder info concurrently for speed
   const [{ images, subfolders }, folder] = await Promise.all([
     getFolderImages(id),

@@ -71,7 +71,7 @@ export const getFolders = cache(async () => {
   }
 
   const drive = google.drive({ version: 'v3', auth: getAuth() });
-  const rootFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+  const rootFolderId = process.env.GOOGLE_DRIVE_PUBLIC_ROOT_ID;
 
   // Check if root folder has direct images
   const rootImagesRes = await drive.files.list({
@@ -180,6 +180,32 @@ export const getFolders = cache(async () => {
   }
 
   return folders;
+});
+
+export const getPrivateFolders = cache(async () => {
+  if (!hasValidCredentials()) {
+    return [];
+  }
+
+  const drive = google.drive({ version: 'v3', auth: getAuth() });
+  const rootFolderId = process.env.GOOGLE_DRIVE_PRIVATE_ROOT_ID;
+
+  if (!rootFolderId || rootFolderId === 'your_private_folder_id_here') {
+    return [];
+  }
+
+  try {
+    const foldersRes = await drive.files.list({
+      q: `'${rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      fields: 'files(id, name, createdTime)',
+      orderBy: 'createdTime desc',
+    });
+
+    return foldersRes.data.files || [];
+  } catch (err) {
+    console.error('Error fetching private folders:', err);
+    return [];
+  }
 });
 
 export const getFolderImages = cache(async (folderId) => {
